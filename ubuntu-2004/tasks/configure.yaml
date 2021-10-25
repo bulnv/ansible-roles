@@ -1,0 +1,109 @@
+---
+
+- name: 'Choose ssh port'
+  set_fact:
+    ssh_port: "{{ ssh_custom_port }}"
+  when: "{{ change_ssh_port }}"
+  
+- name: 'Disable IPv6 in UFW'
+  ansible.builtin.lineinfile:
+    line: 'IPV6=no'
+    state: 'present'
+    path: '/etc/ufw/ufw.conf'
+  when: "{{ disable_ipv6 }}"
+
+- name: 'UFW logging on'
+  community.general.ufw:
+    logging: 'on'
+
+- name: 'UFW deny incoming'
+  community.general.ufw:
+    default: 'deny'
+    direction: 'incoming'
+
+- name: 'UFW allow outgoing'
+  community.general.ufw:
+    default: 'allow'
+    direction: 'outgoing'
+
+- name: 'UFW allow OpenSSH'
+  community.general.ufw:
+    rule: allow
+    port: "{{ ssh_port }}"
+    proto: 'tcp'
+
+- name: 'UFW allow OpenSSH'
+  community.general.ufw:
+    rule: limit
+    port: "{{ ssh_port }}"
+    proto: 'tcp'
+
+- name: 'UFW enable on'
+  community.general.ufw:
+    state: enabled
+
+- name: 'Add sudoers users to sudo group'
+  user:
+    name="{{ setup_user }}"
+    groups=sudo
+    append=yes
+    state=present
+    createhome=yes
+
+- name: 'Allow passwordless login'
+  copy:
+    content: "{{ setup_user }} ALL=(ALL) NOPASSWD:ALL"
+    dest: "/etc/sudoers.d/{{ setup_user }}"
+    force: yes
+    group: root
+    owner: root
+    mode: 0640
+
+- name: Set up multiple authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ setup_user }}"
+    state: present
+    key: "{{ lookup('file', item) }}"
+  with_fileglob:
+      - 'pub_keys/*.pub'
+
+- name: 'Copy ssh config file'
+  template:
+    src: 'ssh_config.j2'
+    dest: '/etc/ssh/ssh_config'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+
+- name: 'Copy sshd config file'
+  template:
+    src: 'sshd_config.j2'
+    dest: '/etc/ssh/sshd_config'
+    owner: 'root'
+    group: 'root'
+    mode: 0644
+
+- name: 'Find old ssh server keys'
+  find:
+    paths: /etc/ssh
+    patterns: "ssh_host_*key*"
+  register: find_results
+
+- name: 'Remove old ssh server keys'
+  file:
+    path: "{{ item['path'] }}"
+    state: absent
+  with_items: "{{ find_results['files'] }}"
+
+- name: 'Generate new server keys'
+  command:
+    cmd: "{{ item }}"
+    chdir: '/etc/ssh'
+  with_items: 
+  - 'ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -N ""'
+  - 'ssh-keygen -t rsa -b 8192 -f /etc/ssh/ssh_host_rsa_key -N ""'
+
+- name: 'Restart sshd sshd'
+  ansible.builtin.systemd:
+    name: ssh.service
+    state: restarted

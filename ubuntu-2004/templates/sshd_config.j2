@@ -1,0 +1,29 @@
+{% if change_ssh_port %}
+Port {{ ssh_port }}
+{% endif %}
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+LogLevel VERBOSE
+Subsystem sftp /usr/lib/sftp-server -f AUTHPRIV -l INFO
+PermitRootLogin no
+LoginGraceTime 2m
+UseDNS no
+AllowTcpForwarding no
+X11Forwarding no
+UsePAM yes
+{% if allowed_user_password %}
+AuthenticationMethods publickey password
+PasswordAuthentication yes
+{% else %}
+AuthenticationMethods publickey
+PasswordAuthentication no
+{% endif %}
+PermitEmptyPasswords no
+ChallengeResponseAuthentication no
+KerberosAuthentication no
+GSSAPIAuthentication no
+Match User $SETUP_USER
+AllowTcpForwarding yes

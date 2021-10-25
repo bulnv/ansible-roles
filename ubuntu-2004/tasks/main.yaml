@@ -1,0 +1,18 @@
+---
+- name: 'prepare'
+  include: 'prepare.yaml'
+  tags: 
+    - 'all'
+    - 'prepare'
+
+- name: 'install'
+  include: 'install.yaml'
+  tags:
+    - 'all'
+    - 'install'
+
+- name: 'configure'
+  include: 'configure.yaml'
+  tags:
+    - 'all'
+    - 'configure'
