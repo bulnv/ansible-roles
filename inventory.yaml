@@ -4,4 +4,6 @@ all:
 prosody:
   hosts:
     ubuntu: 
-      ansible_host: 193.123.59.16
+      ansible_host: 193.123.0.0
+      setup_user: dam
+      ssh_custom_port: 22022

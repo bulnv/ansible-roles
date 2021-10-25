@@ -1,38 +1,32 @@
-Role Name
-=========
+# Install prosody container with ansible role
 
-A brief description of the role goes here.
+## Requirements
 
-Requirements
-------------
+- ansible 2.9 installed
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## Steps to provision server
 
-Role Variables
---------------
-
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+- update inventory.yaml and put there the host with correct hostname. This hostname and IP
+- make sure you have access to the host with your key like
+- you can specify user distinct from root in variable ansible_user in inventory.yaml (see example) 
+- prodibe the keys in files/pub_keys/*.pub they will be attached to the setup_user
+- all the defaults variables see in the defaults/main.yaml
+- you can specify any of them in the inventory (see example)
+- check that you are able to communicate with the server using command
+```sh
+ansible -m ping hostname
+``` 
+- install all the stuff with the command
+```
+ansible-playbook prosody.yaml -i inventory.yaml
+```
+- also you can use the tags
+```
+ansible-playbook prosody.yaml -i inventory.yaml --tags='install'
+```
+```
+ansible-playbook prosody.yaml -i inventory.yaml --tags='install, configure'
+```
+```
+ansible-playbook prosody.yaml -i inventory.yaml --tags='configure'
+```
